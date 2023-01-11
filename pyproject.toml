@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "async-python-sprint-4"
+version = "0.1.0"
+description = ""
+authors = ["Pavel Korsakov <PKorsakov@datafort.ru>"]
+readme = "README.md"
+#packages = [{include = "async_python_sprint_4"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.89.1"
+uvicorn = "^0.20.0"
+orjson = "^3.8.5"
+sqlalchemy = "^1.4.46"
+sqlalchemy-utils = "^0.39.0"
+asyncpg = "^0.27.0"
+psycopg2-binary = "^2.9.5"
+databases = {extras = ["postgresql"], version = "^0.7.0"}
+alembic = "^1.9.1"
+flake8 = "^6.0.0"
+mypy = "^0.991"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
