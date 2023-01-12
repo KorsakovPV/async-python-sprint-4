@@ -3,16 +3,20 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import declared_attr, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-from db.db import Base
+
+Base = declarative_base()
+
 
 
 # @as_declarative()
 class BaseModel(Base):
+    __abstract__ = True
+
     id: Column[UUID] = Column(
         UUID(as_uuid=True), primary_key=True, server_default=text('uuid_generate_v4()'),
     )
-
     created_at = Column(TIMESTAMP(timezone=True), server_default=sql.func.current_timestamp())
     created_by = Column(VARCHAR(255), nullable=True)
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.current_timestamp())
@@ -23,8 +27,4 @@ class BaseModel(Base):
     #     return cls.__name__.lower()
 
 
-class Entity(BaseModel):
-    __tablename__ = "entity"
-    # id = Column(Integer, primary_key=True)
-    title = Column(String(100), unique=True, nullable=False)
-    # created_at = Column(DateTime, index=True, default=datetime.utcnow)
+
