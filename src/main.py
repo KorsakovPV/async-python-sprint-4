@@ -23,7 +23,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-app.include_router(base.router, prefix='/api/v1')
+app.include_router(base.api_router, prefix='/api/v1')
 
 if __name__ == '__main__':
     logger.info(f'Server started.')
