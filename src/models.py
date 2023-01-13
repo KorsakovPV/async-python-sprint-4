@@ -38,7 +38,7 @@ class UrlModel(BaseModel):
 
     url = Column(String(), nullable=False, unique=True)
     is_delete = Column(Boolean, nullable=False, default=False)
-    history = relationship('HistoryModel', backref='history')  # type: ignore
+    # history = relationship('HistoryModel', backref='url_history')  # type: ignore
 
 
 class HistoryModel(BaseModel):
@@ -51,15 +51,15 @@ class HistoryModel(BaseModel):
     )
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey('urls.id', ondelete='RESTRICT'),
+        ForeignKey('users.id', ondelete='RESTRICT'),
         nullable=True
     )
     domen = Column(String(), nullable=False)
-    method = Column(Enum('GET', 'POST', 'PATCH', 'DELETE'))
+    method = Column(Enum('GET', 'POST', 'PATCH', 'DELETE', name='request_methods'))
 
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
 
     name = Column(VARCHAR(255), nullable=False)
-    history = relationship('HistoryModel', backref='history')  # type: ignore
+    # history = relationship('HistoryModel', backref='user_history')  # type: ignore

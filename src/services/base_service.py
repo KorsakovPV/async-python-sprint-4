@@ -36,28 +36,35 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
-class BaseServiceDB(BaseService, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class BaseServiceDB(BaseService):
 
     def __init__(self, model: Type[ModelType]):
         self._model = model
 
 
-class ReadServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class ReadServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
-        statement = select(self._model).where(self._model.id == id)
+        statement = select(self._model).filter(self._model.id == id)
+        statement = await self.check_and_remove_is_delete(statement)
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
+
+    async def check_and_remove_is_delete(self, statement):
+        if hasattr(self._model, 'is_delete'):
+            statement = statement.filter(self._model.is_delete == False)
+        return statement
 
     async def get_multi(
             self, db: AsyncSession, *, skip=0, limit=100
     ) -> List[ModelType]:
         statement = select(self._model).offset(skip).limit(limit)
+        statement = await self.check_and_remove_is_delete(statement)
         results = await db.execute(statement=statement)
         return results.scalars().all()
 
 
-class CreateServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class CreateServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)
@@ -68,7 +75,7 @@ class CreateServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, Upd
         return db_obj
 
 
-class UpdateServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class UpdateServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def update(
             self,
@@ -78,22 +85,35 @@ class UpdateServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, Upd
             db_obj: ModelType,
             obj_in: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
-        # todo реализовать
+        for key, value in obj_in:
+            setattr(db_obj, key, value)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
 
-class DeleteServiceMixin(BaseServiceDB, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class DeleteServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
-    async def delete(self, db: AsyncSession, *, id: UUID) -> ModelType:
-        # todo реализовать
-        return {}  # db_obj
+    async def delete(
+            self,
+            db: AsyncSession,
+            *,
+            db_obj: ModelType,
+            # id: UUID
+    ) -> ModelType:
+        # db_obj.is_delete = True
+        setattr(db_obj, 'is_delete', True)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
 
 class ServiceDB(
-    BaseServiceDB,
     ReadServiceMixin,
     CreateServiceMixin,
     UpdateServiceMixin,
-    DeleteServiceMixin
+    DeleteServiceMixin,
+    BaseServiceDB,
+    Generic[ModelType, CreateSchemaType, UpdateSchemaType]
 ):
     pass

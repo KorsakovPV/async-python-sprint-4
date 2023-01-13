@@ -1,8 +1,8 @@
 """init
 
-Revision ID: ab0a36c895a0
+Revision ID: 6498563ed779
 Revises: 
-Create Date: 2023-01-13 19:52:40.668088
+Create Date: 2023-01-14 01:11:14.094508
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'ab0a36c895a0'
+revision = '6498563ed779'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,9 +21,9 @@ def upgrade() -> None:
     op.create_table('urls',
     sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('uuid_generate_v4()'), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('created_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), nullable=True),
-    sa.Column('updated_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
     sa.Column('url', sa.String(), nullable=False),
     sa.Column('is_delete', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -32,24 +32,24 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('uuid_generate_v4()'), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('created_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), nullable=True),
-    sa.Column('updated_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
     sa.Column('name', sa.VARCHAR(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('history',
     sa.Column('id', postgresql.UUID(as_uuid=True), server_default=sa.text('uuid_generate_v4()'), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('created_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('created_by', sa.String(length=255), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), nullable=True),
-    sa.Column('updated_by', sa.VARCHAR(length=255), nullable=True),
+    sa.Column('updated_by', sa.String(length=255), nullable=True),
     sa.Column('url_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('domen', sa.String(), nullable=False),
-    sa.Column('method', sa.Enum('GET', 'POST', 'PUT', 'PATCH', 'DELETE'), nullable=True),
+    sa.Column('method', sa.Enum('GET', 'POST', 'PATCH', 'DELETE', name='request_methods'), nullable=True),
     sa.ForeignKeyConstraint(['url_id'], ['urls.id'], ondelete='RESTRICT'),
-    sa.ForeignKeyConstraint(['user_id'], ['urls.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

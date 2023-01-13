@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[urls_scheme.UrlReadSchema], status_code=status.HTTP_200_OK)
-def read_urls(
+async def read_urls(
         db: AsyncSession = Depends(get_session),
         skip: int = 0,
         limit: int = 100
@@ -26,7 +26,7 @@ def read_urls(
 
 
 @router.get("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
-def read_url(
+async def read_url(
         *,
         db: AsyncSession = Depends(get_session),
         id: UUID,
@@ -42,7 +42,7 @@ def read_url(
 
 
 @router.post("/", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_201_CREATED)
-def create_url(
+async def create_url(
         *,
         url_in: urls_scheme.UrlCreateSchema,
         db: AsyncSession = Depends(get_session),
@@ -55,8 +55,8 @@ def create_url(
     return url
 
 
-@router.put("/{id}", response_model=urls_scheme.UrlEditSchema, status_code=status.HTTP_200_OK)
-def update_urls(
+@router.put("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
+async def update_urls(
         *,
         db: AsyncSession = Depends(get_session),
         id: UUID,
@@ -75,7 +75,7 @@ def update_urls(
 
 
 @router.delete("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_410_GONE)
-def delete_url(
+async def delete_url(
         *,
         db: AsyncSession = Depends(get_session),
         id: UUID
@@ -83,9 +83,10 @@ def delete_url(
     """
     Delete an entity.
     """
-    entity = {}
     # get entity from db
-    if not entity:
+    url = await url_crud.get(db=db, id=id)
+    if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
     # remove item from db
-    return entity
+    url = await url_crud.delete(db=db, db_obj=url)
+    return url
