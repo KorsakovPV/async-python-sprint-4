@@ -1,13 +1,20 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.v1 import base
 from config.config import settings
 from config.logger import logger
 
+from fastapi_auth_middleware import AuthMiddleware
+
 import time
+
+from db.db import get_session
+from middleware.blocked_host import BlockedHostMiddleware
 
 # from config import config
 
@@ -28,13 +35,9 @@ app = FastAPI(
 
 app.include_router(base.api_router, prefix='/api/v1')
 
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
+app.add_middleware(
+    BlockedHostMiddleware, blocked_hosts=['example.com', '*.example.com']
+)
 
 if __name__ == '__main__':
     logger.info(f'Server started.')
