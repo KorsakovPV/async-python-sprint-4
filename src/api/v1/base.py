@@ -1,12 +1,10 @@
 import sys
 
-from sqlalchemy.orm import Session
-from sqlalchemy import exc
-
-from api.v1 import url, request_for_short, history
-
 from fastapi import APIRouter, Depends
+from sqlalchemy import exc
+from sqlalchemy.orm import Session
 
+from api.v1 import history, request_for_short, url
 from db.db import get_session
 
 api_router = APIRouter()

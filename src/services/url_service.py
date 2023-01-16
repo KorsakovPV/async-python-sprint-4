@@ -1,14 +1,13 @@
-import httpx
-from typing import List
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import httpx
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import HistoryModel
-
-from models import UrlModel
+from models import HistoryModel, UrlModel
 from schemes.urls_scheme import UrlCreateSchema, UrlEditSchema
-from .base_service import ServiceDB, BaseService
+
+from .base_service import BaseService, ServiceDB
 
 
 class UrlServiceDB(ServiceDB[UrlModel, UrlCreateSchema, UrlEditSchema]):
@@ -75,33 +74,3 @@ class RequestService(BaseService):
 
 
 request_crud = RequestService()
-
-
-class HistoryServiceDB():
-
-    async def get_multi(
-            self,
-            url_id: UUID | None,
-            user_id: UUID | None,
-            domen: str | None,
-            method: str | None,
-            db: AsyncSession,
-            *,
-            skip=0,
-            limit=100
-    ) -> List[HistoryModel]:
-        statement = select(HistoryModel).offset(skip).limit(limit)
-        if url_id:
-            statement = statement.filter(HistoryModel.url_id == url_id)
-        if user_id:
-            statement = statement.filter(HistoryModel.user_id == user_id)
-        if domen:
-            statement = statement.filter(HistoryModel.domen == domen)
-        if method:
-            statement = statement.filter(HistoryModel.method == method)
-        results = await db.execute(statement=statement)
-        return results.scalars().all()
-        pass
-
-
-history_crud = HistoryServiceDB()

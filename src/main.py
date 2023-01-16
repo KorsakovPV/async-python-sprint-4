@@ -5,7 +5,6 @@ from fastapi.responses import ORJSONResponse
 from api.v1 import base
 from config.config import settings
 from config.logger import logger
-
 from middleware.blocked_host import BlockedHostMiddleware
 
 app = FastAPI(

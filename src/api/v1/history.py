@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends
-
-from db.db import get_session
-
 from typing import Any
 from uuid import UUID
 
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.url_service import history_crud
+from db.db import get_session
+from services.history_service import history_crud
 
 router = APIRouter()
 

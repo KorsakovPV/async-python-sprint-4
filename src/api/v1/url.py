@@ -54,6 +54,24 @@ async def create_url(
     return url
 
 
+@router.post(
+    "/multi",
+    response_model=List[urls_scheme.UrlReadSchema],
+    status_code=status.HTTP_201_CREATED
+)
+async def create_urls(
+        *,
+        urls_in: List[urls_scheme.UrlCreateSchema],
+        db: AsyncSession = Depends(get_session),
+) -> Any:
+    """
+    Create new entity.
+    """
+    # create item by params
+    urls = await url_crud.create_multi(db=db, obj_in=urls_in)
+    return urls
+
+
 @router.put("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
 async def update_urls(
         *,

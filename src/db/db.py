@@ -1,7 +1,8 @@
 from typing import AsyncIterator
 
+from sqlalchemy.ext.asyncio import (AsyncSession,  # type: ignore
+                                    create_async_engine)
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession  # type: ignore
 
 from config.config import settings
 

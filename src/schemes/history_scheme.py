@@ -1,8 +1,8 @@
+from pydantic import BaseModel
 from pydantic.json import UUID
 
-from schemes.base_scheme import BaseReadSchema, BaseCreateSchema, BaseEditSchema
-
-from pydantic import BaseModel
+from schemes.base_scheme import (BaseCreateSchema, BaseEditSchema,
+                                 BaseReadSchema)
 
 
 class HistoryBaseSchema(BaseModel):
