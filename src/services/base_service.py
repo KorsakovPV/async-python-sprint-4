@@ -48,7 +48,7 @@ class ReadServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def check_and_remove_is_delete(self, statement):
         if hasattr(self._model, 'is_delete'):  # type: ignore
-            statement = statement.filter(self._model.is_delete is False)  # type: ignore
+            statement = statement.filter(self._model.is_delete == False)  # type: ignore
         return statement
 
     async def get_multi(
