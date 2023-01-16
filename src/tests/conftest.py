@@ -11,32 +11,30 @@ from sqlalchemy import text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession, AsyncTransaction,
                                     create_async_engine)
-from sqlalchemy.orm import DeclarativeMeta, sessionmaker
+from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
-from models import Base
-
-# from config.session import create_sessionmaker as async_session
-# from model import Base, ChatRoomModel, ConnectedChatRoomModel, MessageModel, UserModel
-
-# from db.db import async_session
-
-engine_test = create_async_engine(settings.TEST_DB_URL, echo=True, future=True)
-async_session_test = sessionmaker(
-    bind=engine_test, class_=AsyncSession, expire_on_commit=False
-)
+from db.db import create_sessionmaker
+# from config.session import create_sessionmaker
+from models import Base#, ChatRoomModel, ConnectedChatRoomModel, MessageModel, UserModel
 
 
-# def create_engine_test() -> AsyncEngine:
-#     return create_async_engine(
-#         settings.TEST_DB_URL,
-#         echo=True,
-#     )
+def create_engine_test() -> AsyncEngine:
+    return create_async_engine(
+        settings.TEST_DB_URL,
+        echo=True,
+    )
 
-# engine_test = create_engine_test()
-# async_session_test = async_session(engine_test)
 
-print(37)
+engine_test = create_engine_test()
+async_session_test = create_sessionmaker(engine_test)
+
+async def override_get_db_session():
+    # try:
+    db = async_session_test()
+    yield db
+    # finally:
+    #     db.close()
 
 @dataclass
 class DBUtils:
@@ -111,18 +109,17 @@ async def _create_db() -> None:
     await create_db(url=settings.TEST_DB_URL, base=Base)
 
 
-# @pytest_asyncio.fixture()
-# async def engine_test() -> AsyncGenerator[AsyncEngine, None]:
-#     engine = create_engine_test()
-#     try:
-#         yield engine
-#     finally:
-#         await engine.dispose()
+@pytest_asyncio.fixture()
+async def engine_test() -> AsyncGenerator[AsyncEngine, None]:
+    engine = create_engine_test()
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
 
 
 @pytest_asyncio.fixture()
-async def db_test_connection() -> AsyncGenerator[AsyncConnection, None]:
-# async def db_test_connection(engine_test: AsyncEngine) -> AsyncGenerator[AsyncConnection, None]:
+async def db_test_connection(engine_test: AsyncEngine) -> AsyncGenerator[AsyncConnection, None]:
     async with engine_test.connect() as test_connection:
         yield test_connection
 
@@ -156,30 +153,30 @@ async def db_transaction(
 #         user = UserModel(name='user_test')
 #         session.add(user)
 #     yield user
-
-
-@pytest_asyncio.fixture()
-async def user_json() -> dict:
-    return {
-        'name': 'user_test',
-    }
-
-
+#
+#
+# @pytest_asyncio.fixture()
+# async def user_json() -> dict:
+#     return {
+#         'name': 'user_test',
+#     }
+#
+#
 # @pytest_asyncio.fixture()
 # async def chat_room() -> AsyncGenerator[UserModel, None]:
 #     async with async_session_test() as session, session.begin():
 #         chat_room = ChatRoomModel(name='chat_room_test')
 #         session.add(chat_room)
 #     yield chat_room
-
-
-@pytest_asyncio.fixture()
-async def chat_room_json() -> dict:
-    return {
-        'name': 'user_test',
-    }
-
-
+#
+#
+# @pytest_asyncio.fixture()
+# async def chat_room_json() -> dict:
+#     return {
+#         'name': 'user_test',
+#     }
+#
+#
 # @pytest_asyncio.fixture()
 # async def connect_chat(user, chat_room) -> AsyncGenerator[UserModel, None]:
 #     async with async_session_test() as session, session.begin():
@@ -189,15 +186,15 @@ async def chat_room_json() -> dict:
 #         )
 #         session.add(connect_chat)
 #     yield connect_chat
-
-
-@pytest_asyncio.fixture()
-async def connect_chat_json() -> dict:
-    return {
-        'name': 'user_test',
-    }
-
-
+#
+#
+# @pytest_asyncio.fixture()
+# async def connect_chat_json() -> dict:
+#     return {
+#         'name': 'user_test',
+#     }
+#
+#
 # @pytest_asyncio.fixture()
 # async def message(user, chat_room) -> AsyncGenerator[UserModel, None]:
 #     async with async_session_test() as session, session.begin():
@@ -208,12 +205,13 @@ async def connect_chat_json() -> dict:
 #         )
 #         session.add(message)
 #     yield message
-
-
-@pytest_asyncio.fixture()
-async def message_json(connect_chat) -> dict:
-    return {
-        'message': 'message',
-        'chat_room_id': str(connect_chat.chat_room_id),
-        'author_id': str(connect_chat.user_id),
-    }
+#
+#
+# @pytest_asyncio.fixture()
+# async def message_json(connect_chat) -> dict:
+#     return {
+#         'message': 'message',
+#         'chat_room_id': str(connect_chat.chat_room_id),
+#         'author_id': str(connect_chat.user_id),
+#     }
+#

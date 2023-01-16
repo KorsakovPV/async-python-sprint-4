@@ -14,12 +14,12 @@ api_router.include_router(history.router, prefix="/history", tags=['history'])
 api_router.include_router(request_for_short.router, prefix="/request", tags=['request'])
 
 
-@api_router.get('/', status_code=status.HTTP_410_GONE)
+@api_router.get('/', status_code=status.HTTP_200_OK)
 async def root_handler():
     return {'version': 'v1'}
 
 
-@api_router.get('/ping', status_code=status.HTTP_410_GONE)
+@api_router.get('/ping', status_code=status.HTTP_200_OK)
 async def ping_db(db: Session = Depends(get_session)):
     sql = 'SELECT version();'
     try:
