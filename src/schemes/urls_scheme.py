@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 class UrlBaseSchema(BaseModel):
     url: str
-    # is_delete: bool
 
 
 class UrlReadSchema(UrlBaseSchema, BaseReadSchema):

@@ -1,13 +1,7 @@
-from typing import Optional
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
-
-
-# Shared properties
-# class BaseScheme(BaseModel):
-#     id: UUID
 
 
 class BaseReadSchema(BaseModel):

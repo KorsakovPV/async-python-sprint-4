@@ -1,16 +1,18 @@
 import sys
 
-from fastapi import APIRouter
-from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import exc
 
-from api.v1 import url
+from api.v1 import url, request_for_short, history
+
+from fastapi import APIRouter, Depends
+
 from db.db import get_session
 
-# Объект router, в котором регистрируем обработчики
 api_router = APIRouter()
-api_router.include_router(url.router, prefix="/urls", tags=["urls"])
+api_router.include_router(url.router, prefix="/urls", tags=['urls'])
+api_router.include_router(history.router, prefix="/urls", tags=['history'])
+api_router.include_router(request_for_short.router, prefix="/urls", tags=['request'])
 
 
 @api_router.get('/')
@@ -22,7 +24,7 @@ async def root_handler():
 async def ping_db(db: Session = Depends(get_session)):
     sql = 'SELECT version();'
     try:
-        result = await db.execute(sql)
+        result = await db.execute(sql)  # type: ignore
         ver_db, = [x for x in result.scalars()]
         return {
             'api': 'v1',

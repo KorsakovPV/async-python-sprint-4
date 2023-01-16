@@ -13,6 +13,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[urls_scheme.UrlReadSchema], status_code=status.HTTP_200_OK)
 async def read_urls(
+        *,
         db: AsyncSession = Depends(get_session),
         skip: int = 0,
         limit: int = 100
@@ -20,7 +21,6 @@ async def read_urls(
     """
     Retrieve entities.
     """
-    # get entities from db
     urls = await url_crud.get_multi(db=db, skip=skip, limit=limit)
     return urls
 
@@ -34,7 +34,6 @@ async def read_url(
     """
     Get by ID.
     """
-    # get entity from db
     url = await url_crud.get(db=db, id=id)
     if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
@@ -65,11 +64,11 @@ async def update_urls(
     """
     Update an entity.
     """
-    # get entity from db
+    # get item from db
     url = await url_crud.get(db=db, id=id)
     if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    # update entity in db
+    # update item in db
     url = await url_crud.update(db=db, db_obj=url, obj_in=url_in)
     return url
 
@@ -83,7 +82,7 @@ async def delete_url(
     """
     Delete an entity.
     """
-    # get entity from db
+    # get item from db
     url = await url_crud.get(db=db, id=id)
     if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")

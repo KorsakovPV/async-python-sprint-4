@@ -1,9 +1,6 @@
 from typing import Any, Dict, Optional, Union
-from logging import config as logging_config
 
 from pydantic import BaseSettings, PostgresDsn, validator
-
-# from config.logger import LOGGING
 
 SENTRY_DSN_TEST = ''
 
@@ -56,5 +53,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# logging_config.dictConfig(LOGGING)
