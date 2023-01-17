@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import RedirectResponse, Response
 
 from db.db import get_session
 from services.url_service import request_crud
@@ -9,11 +10,12 @@ from services.url_service import request_crud
 router = APIRouter()
 
 
-@router.get('/{url_id:str}', response_model=None)
+@router.get('/{url_id:str}', response_class=Response)
 async def get_request(url_id: UUID, user_id: UUID | None = None,
                       db: AsyncSession = Depends(get_session)):
-    return await request_crud.get(url_id=url_id, user_id=user_id, db=db)
-
+    url = await request_crud.get(url_id=url_id, user_id=user_id, db=db)
+    # return await request_crud.get(url_id=url_id, user_id=user_id, db=db)
+    return RedirectResponse(url=url)
 
 @router.post('/{url_id:str}', response_model=None)
 async def post_request(url_id: UUID, user_id: UUID | None = None,

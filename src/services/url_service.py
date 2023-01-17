@@ -1,5 +1,5 @@
 from uuid import UUID
-
+from fastapi import FastAPI, HTTPException
 # import aiohttp
 import httpx
 from sqlalchemy import select
@@ -43,19 +43,17 @@ class RequestService(BaseService):
     # TODO Уточнить у наставника кок вернуть объект request а не json
     async def get(self, url_id: UUID, user_id: UUID | None, db: AsyncSession):
         if url := await self.get_url_from_db_by_id(db, url_id):
-            async with httpx.AsyncClient() as client:
-                proxy = await client.get(url)
             await self.add_in_history(user_id, url_id, db, method='GET')
-            return proxy.json()
-        return {}
+            return url
+        raise HTTPException(status_code=404, detail="Item not found")
 
     async def create(self, url_id: UUID, user_id: UUID | None, db: AsyncSession):
         if url := await self.get_url_from_db_by_id(db, url_id):
             async with httpx.AsyncClient() as client:
                 proxy = await client.post(url)
             await self.add_in_history(user_id, url_id, db, method='POST')
-            return proxy.json()
-        return {}
+            return url
+        raise HTTPException(status_code=404, detail="Item not found")
 
     async def update(self, url_id: UUID, user_id: UUID | None, db: AsyncSession):
         if url := await self.get_url_from_db_by_id(db, url_id):
