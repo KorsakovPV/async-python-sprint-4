@@ -65,7 +65,7 @@ async def create_urls(
         db: AsyncSession = Depends(get_session),
 ) -> Any:
     """
-    Create new entity.
+    Create new entities.
     """
     # create item by params
     urls = await url_crud.create_multi(db=db, obj_in=urls_in)

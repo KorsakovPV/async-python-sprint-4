@@ -29,11 +29,11 @@ async_session_test = create_sessionmaker(engine_test)
 
 
 async def override_get_db_session():
-    # try:
-    db = async_session_test()
-    yield db
-    # finally:
-    #     db.close()
+    try:
+        db = async_session_test()
+        yield db
+    finally:
+        db.close()
 
 
 @dataclass

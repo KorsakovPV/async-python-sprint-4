@@ -12,8 +12,12 @@ class BlockedHostMiddleware:
     Middleware блокирует запросы из запрещенных подсетей (black list).
 
     app.add_middleware(
-        BlockedHostMiddleware, blocked_hosts=['*', "example.com", "*.example.com"]
+        BlockedHostMiddleware, blocked_hosts=['*', 'example.com', '*.example.com']
     )
+
+    '*' Блокирует все хосты
+    'example.com' Блокирует конкретный домен
+    '*.example.com' Блокирует все адресы относяшиеся к домену
     """
 
     def __init__(
