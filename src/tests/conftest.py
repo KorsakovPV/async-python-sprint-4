@@ -6,17 +6,15 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
-from _pytest.monkeypatch import MonkeyPatch
 from sqlalchemy import text
 from sqlalchemy.engine import URL, make_url
-from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession, AsyncTransaction,
+from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncTransaction,
                                     create_async_engine)
 from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
 from db.db import create_sessionmaker
-# from config.session import create_sessionmaker
-from models import Base#, ChatRoomModel, ConnectedChatRoomModel, MessageModel, UserModel
+from models import Base, HistoryModel, UrlModel
 
 
 def create_engine_test() -> AsyncEngine:
@@ -29,12 +27,14 @@ def create_engine_test() -> AsyncEngine:
 engine_test = create_engine_test()
 async_session_test = create_sessionmaker(engine_test)
 
+
 async def override_get_db_session():
     # try:
     db = async_session_test()
     yield db
     # finally:
     #     db.close()
+
 
 @dataclass
 class DBUtils:
@@ -137,81 +137,29 @@ async def db_transaction(
         await transaction.rollback()
 
 
-# @pytest_asyncio.fixture(autouse=True)
-# async def session(
-#         monkeypatch: MonkeyPatch
-# ) -> AsyncGenerator[AsyncSession, None]:
-#     monkeypatch.setattr('api.async_session', async_session_test)
-#
-#     async with async_session_test() as session:
-#         yield session
+@pytest_asyncio.fixture()
+async def url_items() -> AsyncGenerator[UrlModel, None]:
+    async with async_session_test() as session, session.begin():
+        url1 = UrlModel(
+            url='http://httpbin.org/uuid',
+            is_delete=False,
+        )
+        url2 = UrlModel(
+            url='https://www.google.ru/',
+            is_delete=True,
+        )
+        session.add_all([url1, url2])
+    yield [url1, url2]
 
 
-# @pytest_asyncio.fixture()
-# async def user() -> AsyncGenerator[UserModel, None]:
-#     async with async_session_test() as session, session.begin():
-#         user = UserModel(name='user_test')
-#         session.add(user)
-#     yield user
-#
-#
-# @pytest_asyncio.fixture()
-# async def user_json() -> dict:
-#     return {
-#         'name': 'user_test',
-#     }
-#
-#
-# @pytest_asyncio.fixture()
-# async def chat_room() -> AsyncGenerator[UserModel, None]:
-#     async with async_session_test() as session, session.begin():
-#         chat_room = ChatRoomModel(name='chat_room_test')
-#         session.add(chat_room)
-#     yield chat_room
-#
-#
-# @pytest_asyncio.fixture()
-# async def chat_room_json() -> dict:
-#     return {
-#         'name': 'user_test',
-#     }
-#
-#
-# @pytest_asyncio.fixture()
-# async def connect_chat(user, chat_room) -> AsyncGenerator[UserModel, None]:
-#     async with async_session_test() as session, session.begin():
-#         connect_chat = ConnectedChatRoomModel(
-#             user_id=user.id,
-#             chat_room_id=chat_room.id,
-#         )
-#         session.add(connect_chat)
-#     yield connect_chat
-#
-#
-# @pytest_asyncio.fixture()
-# async def connect_chat_json() -> dict:
-#     return {
-#         'name': 'user_test',
-#     }
-#
-#
-# @pytest_asyncio.fixture()
-# async def message(user, chat_room) -> AsyncGenerator[UserModel, None]:
-#     async with async_session_test() as session, session.begin():
-#         message = MessageModel(
-#             author_id=user.id,
-#             chat_room_id=chat_room.id,
-#             message='test_message',
-#         )
-#         session.add(message)
-#     yield message
-#
-#
-# @pytest_asyncio.fixture()
-# async def message_json(connect_chat) -> dict:
-#     return {
-#         'message': 'message',
-#         'chat_room_id': str(connect_chat.chat_room_id),
-#         'author_id': str(connect_chat.user_id),
-#     }
-#
+@pytest_asyncio.fixture()
+async def history_items(url_items) -> AsyncGenerator[HistoryModel, None]:
+    url_obj, deleted_url_obj = url_items
+    async with async_session_test() as session, session.begin():
+        history = HistoryModel(
+            url_id=url_obj.id,
+            method='GET',
+            domen='',
+        )
+        session.add(history)
+    yield history

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import HistoryModel
 
 
-class HistoryServiceDB():
+class HistoryServiceDB:
 
     async def get_multi(
             self,
@@ -22,16 +22,15 @@ class HistoryServiceDB():
     ) -> List[HistoryModel]:
         statement = select(HistoryModel).offset(skip).limit(limit)
         if url_id:
-            statement = statement.filter(HistoryModel.url_id == url_id)
+            statement = statement.filter(HistoryModel.url_id == url_id)  # type: ignore
         if user_id:
-            statement = statement.filter(HistoryModel.user_id == user_id)
+            statement = statement.filter(HistoryModel.user_id == user_id)  # type: ignore
         if domen:
-            statement = statement.filter(HistoryModel.domen == domen)
+            statement = statement.filter(HistoryModel.domen == domen)  # type: ignore
         if method:
-            statement = statement.filter(HistoryModel.method == method)
+            statement = statement.filter(HistoryModel.method == method)  # type: ignore
         results = await db.execute(statement=statement)
         return results.scalars().all()
-        pass
 
 
 history_crud = HistoryServiceDB()
