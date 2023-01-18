@@ -1,6 +1,6 @@
 from uuid import UUID
 from starlette.requests import Request
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Header
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

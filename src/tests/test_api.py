@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from httpx import URL
 
 from db.db import get_session
 from main import app
@@ -24,6 +25,32 @@ class TestApiBaseHandle:
         url = app.url_path_for('ping_db')
         response = client.get(url)
         assert response.status_code == 200
+
+
+class TestBlockedHostMiddleware:
+
+    @pytest.mark.asyncio
+    async def test_call_available(self):
+        url = app.url_path_for('root_handler')
+        response = client.get(url)
+        assert response.status_code == 200
+        assert response.json() == {'version': 'v1'}
+
+    @pytest.mark.asyncio
+    async def test_call_blocked0(self):
+        url = app.url_path_for('root_handler')
+        client.base_url = URL('http://example.com')
+        response = client.get(url)
+        assert response.status_code == 400
+        assert response.text == 'Invalid host header'
+
+    @pytest.mark.asyncio
+    async def test_call_blocked1(self):
+        url = app.url_path_for('root_handler')
+        client.base_url = URL('http://testserver.example.com')
+        response = client.get(url)
+        assert response.status_code == 400
+        assert response.text == 'Invalid host header'
 
 
 class TestApiHistoryHandle:
