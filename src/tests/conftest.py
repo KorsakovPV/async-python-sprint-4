@@ -1,6 +1,3 @@
-from db.db import create_sessionmaker
-from models import Base, HistoryModel, UrlModel
-
 import asyncio
 from asyncio import AbstractEventLoop
 from dataclasses import dataclass
@@ -9,13 +6,16 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
+from _pytest.monkeypatch import MonkeyPatch
 from sqlalchemy import text
 from sqlalchemy.engine import URL, make_url
-from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncTransaction,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession,
+                                    AsyncTransaction, create_async_engine)
 from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
+from db.db import create_sessionmaker
+from models import Base, HistoryModel, UrlModel
 
 
 @dataclass
@@ -150,7 +150,18 @@ async def db_transaction(
         await transaction.rollback()
 
 
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(autouse=True)
+async def session(
+        db_test_connection: AsyncConnection, monkeypatch: MonkeyPatch
+) -> AsyncGenerator[AsyncSession, None]:
+    session_maker = create_sessionmaker(db_test_connection)
+    monkeypatch.setattr('db.db.async_session', session_maker)
+
+    async with session_maker() as session:
+        yield session
+
+
+@pytest_asyncio.fixture(scope='session')
 async def url_items() -> AsyncGenerator[UrlModel, None]:
     async with async_session_test() as session, session.begin():
         url1 = UrlModel(
@@ -165,7 +176,7 @@ async def url_items() -> AsyncGenerator[UrlModel, None]:
     yield [url1, url2]
 
 
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(scope='session')
 async def history_items(url_items) -> AsyncGenerator[HistoryModel, None]:
     url_obj, deleted_url_obj = url_items
     async with async_session_test() as session, session.begin():
