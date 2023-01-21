@@ -1,3 +1,6 @@
+from db.db import create_sessionmaker
+from models import Base, HistoryModel, UrlModel
+
 import asyncio
 from asyncio import AbstractEventLoop
 from dataclasses import dataclass
@@ -13,27 +16,6 @@ from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncTransacti
 from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
-from db.db import create_sessionmaker
-from models import Base, HistoryModel, UrlModel
-
-
-def create_engine_test() -> AsyncEngine:
-    return create_async_engine(
-        settings.TEST_DB_URL,
-        echo=True,
-    )
-
-
-engine_test = create_engine_test()
-async_session_test = create_sessionmaker(engine_test)
-
-
-async def override_get_db_session():
-    try:
-        db = async_session_test()
-        yield db
-    finally:
-        db.close()
 
 
 @dataclass
@@ -80,6 +62,23 @@ class DBUtils:
     @cached_property
     def _parsed_url(self) -> URL:
         return make_url(self.url)
+
+
+def create_engine_test() -> AsyncEngine:
+    db_utils = DBUtils(url=settings.TEST_DB_URL)
+
+    return db_utils.db_engine
+
+
+async_session_test = create_sessionmaker(create_engine_test())
+
+
+async def override_get_db_session():
+    try:
+        db = async_session_test()
+        yield db
+    finally:
+        db.close()
 
 
 async def create_db(url: str, base: DeclarativeMeta) -> None:
