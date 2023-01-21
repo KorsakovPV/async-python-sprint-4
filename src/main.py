@@ -15,7 +15,7 @@ app = FastAPI(
 app.include_router(base.api_router, prefix='/api/v1')
 
 app.add_middleware(
-    BlockedHostMiddleware, blocked_hosts=['example.com', '*.example.com']
+    BlockedHostMiddleware, blocked_hosts=settings.blocked_hosts
 )
 
 if __name__ == '__main__':

@@ -1,10 +1,11 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Generic, List, Optional, Type, TypeVar
 from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 
 from models import Base
 
@@ -41,21 +42,26 @@ class BaseServiceDB(BaseService):
 class ReadServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get(self, db: AsyncSession, id: UUID) -> Optional[ModelType]:
-        statement = select(self._model).filter(self._model.id == id)  # type: ignore
-        statement = await self.check_and_remove_is_delete(statement)
+        statement = select(
+            self._model  # type: ignore
+        ).where(
+            self._model.id == id  # type: ignore
+        ).where(
+            self._model.is_delete == False  # type: ignore  # noqa
+        )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
-
-    async def check_and_remove_is_delete(self, statement):
-        if hasattr(self._model, 'is_delete'):  # type: ignore
-            statement = statement.filter(self._model.is_delete == False)  # type: ignore # noqa
-        return statement
 
     async def get_multi(
             self, db: AsyncSession, *, skip=0, limit=100
     ) -> List[ModelType]:
-        statement = select(self._model).offset(skip).limit(limit)  # type: ignore
-        statement = await self.check_and_remove_is_delete(statement)
+        statement = select(
+            self._model  # type: ignore
+        ).where(
+            self._model.is_delete == False  # type: ignore  # noqa
+        ).offset(skip).limit(
+            limit
+        )
         results = await db.execute(statement=statement)
         return results.scalars().all()
 
@@ -86,14 +92,24 @@ class UpdateServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
             self,
             db: AsyncSession,
             *,
-            db_obj: ModelType,
-            obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+            id: UUID,
+            obj_in: UpdateSchemaType
     ) -> ModelType:
-        for key, value in obj_in:  # type: ignore
-            setattr(db_obj, key, value)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
+        statement = update(
+            self._model  # type: ignore
+        ).where(
+            self._model.id == id  # type: ignore
+        ).where(
+            self._model.is_delete == False  # type: ignore  # noqa
+        )
+        statement = statement.values(
+            obj_in.__dict__
+        ).returning(
+            self._model  # type: ignore
+        )
+        results = await db.execute(statement=statement)
+        # return results.all()
+        return results.one_or_none()
 
 
 class DeleteServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
@@ -102,12 +118,22 @@ class DeleteServiceMixin(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
             self,
             db: AsyncSession,
             *,
-            db_obj: ModelType,
+            id: UUID,
     ) -> ModelType:
-        setattr(db_obj, 'is_delete', True)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
+        statement = update(
+            self._model  # type: ignore
+        ).where(
+            self._model.id == id  # type: ignore
+        ).where(
+            self._model.is_delete == False  # type: ignore  # noqa
+        )
+        statement = statement.values(
+            {'is_delete': True}
+        ).returning(
+            self._model  # type: ignore
+        )
+        results = await db.execute(statement=statement)
+        return results.one_or_none()
 
 
 class ServiceDB(

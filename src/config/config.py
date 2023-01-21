@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Tuple
 
 from pydantic import BaseSettings, PostgresDsn, validator
 
@@ -50,6 +50,8 @@ class Settings(BaseSettings):
             port=str(values.get('TEST_DB_PORT')),
             path=f'/{values.get("TEST_DB_NAME") or ""}',
         )
+
+    blocked_hosts: Tuple[str, ...] = ('example.com', '*.example.com')
 
 
 settings = Settings()

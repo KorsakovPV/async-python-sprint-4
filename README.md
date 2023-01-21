@@ -105,3 +105,29 @@ GET /<url_id>/status?[full-info]&&[max-result=10]&&[offset=0]
 4. Приведите стиль кода в соответствие pep8, flake8, mypy. 
 5. Логируйте результаты действий. 
 6. Покройте написанный код тестами. 
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.89.1"
+uvicorn = "^0.20.0"
+orjson = "^3.8.5"
+sqlalchemy = {extras = ["mypy"], version = "^1.4.46"}
+sqlalchemy-utils = "^0.39.0"
+asyncpg = "^0.27.0"
+psycopg2-binary = "^2.9.5"
+databases = {extras = ["postgresql"], version = "^0.7.0"}
+alembic = "^1.9.1"
+
+
+flake8 = "^6.0.0"
+mypy = "^0.991"
+isort = "^5.11.4"
+
+pytest = "^7.2.1"
+pytest-asyncio = "^0.20.3"
+sqlalchemy-stubs = "^0.4"
+
+#httpx = "^0.23.3"
+#pytest-httpx = "^0.21.2"
+#fastapi-auth-middleware = "^1.0.2"
+

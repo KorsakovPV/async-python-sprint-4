@@ -23,7 +23,7 @@ class BaseModel(Base):  # type: ignore
 class UrlModel(BaseModel):
     __tablename__ = 'urls'
 
-    url = Column(String(), nullable=False, unique=True)
+    url = Column(String(255), nullable=False, unique=True)
     is_delete = Column(Boolean, nullable=False, default=False)
 
 
@@ -40,7 +40,7 @@ class HistoryModel(BaseModel):
         ForeignKey('users.id', ondelete='RESTRICT'),
         nullable=True
     )
-    domen = Column(String(), nullable=False)
+    domen = Column(String(255), nullable=False)
     method = Column(Enum('GET', 'POST', 'PATCH', 'DELETE', name='request_methods'))
 
 

@@ -24,7 +24,7 @@ def upgrade() -> None:
     sa.Column('created_by', sa.String(length=255), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), nullable=True),
     sa.Column('updated_by', sa.String(length=255), nullable=True),
-    sa.Column('url', sa.String(), nullable=False),
+    sa.Column('url', sa.String(length=255), nullable=False),
     sa.Column('is_delete', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('url')
@@ -46,7 +46,7 @@ def upgrade() -> None:
     sa.Column('updated_by', sa.String(length=255), nullable=True),
     sa.Column('url_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('domen', sa.String(), nullable=False),
+    sa.Column('domen', sa.String(length=255), nullable=False),
     sa.Column('method', sa.Enum('GET', 'POST', 'PATCH', 'DELETE', name='request_methods'), nullable=True),
     sa.ForeignKeyConstraint(['url_id'], ['urls.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='RESTRICT'),

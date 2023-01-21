@@ -97,6 +97,12 @@ async def create_db(url: str, base: DeclarativeMeta) -> None:
         await db_utils.db_engine.dispose()
 
 
+async def drop_db(url: str, base: DeclarativeMeta) -> None:
+    db_utils = DBUtils(url=url)
+
+    await db_utils.drop_database()
+
+
 @pytest.fixture(scope='session')
 def event_loop() -> Generator[AbstractEventLoop, None, None]:
     loop = asyncio.new_event_loop()
@@ -104,9 +110,17 @@ def event_loop() -> Generator[AbstractEventLoop, None, None]:
     loop.close()
 
 
+# @pytest.fixture(scope='session')
+# def event_loop():
+#     loop = asyncio.get_event_loop_policy().new_event_loop()
+#     yield loop
+#     loop.close()
+
+
 @pytest_asyncio.fixture(scope='session', autouse=True)
 async def _create_db() -> None:
-    await create_db(url=settings.TEST_DB_URL, base=Base)
+    yield await create_db(url=settings.TEST_DB_URL, base=Base)
+    await drop_db(url=settings.TEST_DB_URL, base=Base)
 
 
 @pytest_asyncio.fixture()

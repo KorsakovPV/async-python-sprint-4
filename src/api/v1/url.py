@@ -11,7 +11,11 @@ from services.url_service import url_crud
 router = APIRouter()
 
 
-@router.get("/", response_model=List[urls_scheme.UrlReadSchema], status_code=status.HTTP_200_OK)
+@router.get(
+    '/',
+    response_model=List[urls_scheme.UrlReadSchema],
+    status_code=status.HTTP_200_OK
+)
 async def read_urls(
         *,
         db: AsyncSession = Depends(get_session),
@@ -21,11 +25,10 @@ async def read_urls(
     """
     Retrieve entities.
     """
-    urls = await url_crud.get_multi(db=db, skip=skip, limit=limit)
-    return urls
+    return await url_crud.get_multi(db=db, skip=skip, limit=limit)
 
 
-@router.get("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
+@router.get('/{id}', response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
 async def read_url(
         *,
         db: AsyncSession = Depends(get_session),
@@ -34,13 +37,12 @@ async def read_url(
     """
     Get by ID.
     """
-    url = await url_crud.get(db=db, id=id)
-    if not url:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    return url
+    if url := await url_crud.get(db=db, id=id):
+        return url
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Item not found')
 
 
-@router.post("/", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_201_CREATED)
+@router.post('/', response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_201_CREATED)
 async def create_url(
         *,
         url_in: urls_scheme.UrlCreateSchema,
@@ -55,7 +57,7 @@ async def create_url(
 
 
 @router.post(
-    "/multi",
+    '/multi',
     response_model=List[urls_scheme.UrlReadSchema],
     status_code=status.HTTP_201_CREATED
 )
@@ -72,7 +74,11 @@ async def create_urls(
     return urls
 
 
-@router.put("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_200_OK)
+@router.put(
+    '/{id}',
+    response_model=urls_scheme.UrlReadSchema,
+    status_code=status.HTTP_200_OK
+)
 async def update_urls(
         *,
         db: AsyncSession = Depends(get_session),
@@ -82,28 +88,31 @@ async def update_urls(
     """
     Update an entity.
     """
-    # get item from db
-    url = await url_crud.get(db=db, id=id)
-    if not url:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    # update item in db
-    url = await url_crud.update(db=db, db_obj=url, obj_in=url_in)
-    return url
+    if url := await url_crud.update(
+            db=db,
+            id=id,
+            obj_in=url_in
+    ):
+        return url
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Item not found')
 
 
-@router.delete("/{id}", response_model=urls_scheme.UrlReadSchema, status_code=status.HTTP_410_GONE)
+@router.delete(
+    '/{id}',
+    response_model=urls_scheme.UrlReadSchema,
+    status_code=status.HTTP_410_GONE
+)
 async def delete_url(
         *,
         db: AsyncSession = Depends(get_session),
-        id: UUID
+        id: UUID,
 ) -> Any:
     """
     Delete an entity.
     """
-    # get item from db
-    url = await url_crud.get(db=db, id=id)
-    if not url:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
-    # remove item from db
-    url = await url_crud.delete(db=db, db_obj=url)
-    return url
+    if url := await url_crud.delete(
+            db=db,
+            id=id,
+    ):
+        return url
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Item not found')
