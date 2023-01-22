@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, value: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(value, str) and value != '':
             return value
-        return PostgresDsn.build(  # type: ignore
+        return PostgresDsn.build(
             scheme='postgresql+asyncpg',
             user=values.get('DB_USER'),
             password=values.get('DB_PASSWORD'),
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     def assemble_test_db_connection(cls, value: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(value, str) and value != '':
             return value
-        return PostgresDsn.build(  # type: ignore
+        return PostgresDsn.build(
             scheme='postgresql+asyncpg',
             user=values.get('TEST_DB_USER'),
             password=values.get('TEST_DB_PASSWORD'),

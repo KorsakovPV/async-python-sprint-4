@@ -23,7 +23,7 @@ async def root_handler():
 async def ping_db(db: Session = Depends(get_session)):
     sql = 'SELECT version();'
     try:
-        result = await db.execute(sql)  # type: ignore
+        result = await db.execute(sql)
         ver_db, = [x for x in result.scalars()]
         return {
             'api': 'v1',

@@ -36,8 +36,6 @@ class DBUtils:
         return create_async_engine(
             self.url,
             isolation_level='AUTOCOMMIT',
-            # pool_size=20,
-            # max_overflow=0
         )
 
     async def create_database(self) -> None:
