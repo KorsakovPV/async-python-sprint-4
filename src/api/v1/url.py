@@ -79,7 +79,7 @@ async def create_urls(
     response_model=urls_scheme.UrlReadSchema,
     status_code=status.HTTP_200_OK
 )
-async def update_urls(
+async def update_url(
         *,
         db: AsyncSession = Depends(get_session),
         id: UUID,

@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 from asyncio import AbstractEventLoop
 from dataclasses import dataclass
 from functools import cached_property
@@ -16,6 +17,7 @@ from sqlalchemy.orm import DeclarativeMeta
 from config.config import settings
 from db.db import create_sessionmaker
 from models import Base, HistoryModel, UrlModel
+from schemes import urls_scheme
 
 
 @dataclass
@@ -31,7 +33,12 @@ class DBUtils:
 
     @cached_property
     def db_engine(self) -> AsyncEngine:
-        return create_async_engine(self.url, isolation_level='AUTOCOMMIT')
+        return create_async_engine(
+            self.url,
+            isolation_level='AUTOCOMMIT',
+            # pool_size=20,
+            # max_overflow=0
+        )
 
     async def create_database(self) -> None:
         query = text(f'CREATE DATABASE {self._parsed_url.database} ENCODING "utf8";')
@@ -48,7 +55,7 @@ class DBUtils:
             await conn.run_sync(base.metadata.create_all)
 
     async def drop_database(self) -> None:
-        query = text(f'DROP DATABASE {self._parsed_url.database}')
+        query = text(f'DROP DATABASE {self._parsed_url.database} WITH (FORCE);')
         async with self.postgres_engine.begin() as conn:
             await conn.execute(query)
 
@@ -107,13 +114,6 @@ def event_loop() -> Generator[AbstractEventLoop, None, None]:
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
-
-
-# @pytest.fixture(scope='session')
-# def event_loop():
-#     loop = asyncio.get_event_loop_policy().new_event_loop()
-#     yield loop
-#     loop.close()
 
 
 @pytest_asyncio.fixture(scope='session', autouse=True)
@@ -187,3 +187,10 @@ async def history_items(url_items) -> AsyncGenerator[HistoryModel, None]:
         )
         session.add(history)
     yield history
+
+
+@pytest_asyncio.fixture()
+def new_test_url():
+    return urls_scheme.UrlEditSchema(
+        url=f'www.google.com/{str(uuid.uuid4())}'
+    )
