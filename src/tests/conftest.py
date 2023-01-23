@@ -4,15 +4,16 @@ from asyncio import AbstractEventLoop
 from dataclasses import dataclass
 from functools import cached_property
 from typing import AsyncGenerator, Generator
+from sqlalchemy import select
 
 import pytest
 import pytest_asyncio
 from _pytest.monkeypatch import MonkeyPatch
-from sqlalchemy import text
+from sqlalchemy import text, event
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession,
                                     AsyncTransaction, create_async_engine)
-from sqlalchemy.orm import DeclarativeMeta
+from sqlalchemy.orm import DeclarativeMeta, Session
 
 from config.config import settings
 from db.db import create_sessionmaker, get_session
@@ -124,9 +125,7 @@ def get_test_engine() -> AsyncEngine:
 
 
 async def get_test_session_for_dependency_overrides() -> AsyncSession:
-    db_utils = DBUtils(url=settings.TEST_DB_URL)
-
-    engine = db_utils.db_engine
+    engine = get_test_engine()
     async_session = create_sessionmaker(engine)
     async with async_session() as session:
         yield session
@@ -137,6 +136,7 @@ async def get_test_session(engine) -> AsyncSession:
     async_session = create_sessionmaker(engine)
     async with async_session() as session:
         yield session
+
 
 
 @pytest_asyncio.fixture(scope='session')
@@ -151,10 +151,8 @@ async def url_items(get_test_session) -> AsyncGenerator[UrlModel, None]:
     )
     get_test_session.add_all([url1, url2])
 
-    from sqlalchemy import select
     statement = select(UrlModel)
-    results = await get_test_session.execute(statement=statement)
-    items = results.scalars().all()
+    await get_test_session.execute(statement=statement)
 
     yield [url1, url2]
 
@@ -169,17 +167,10 @@ async def history_items(url_items, get_test_session) -> AsyncGenerator[HistoryMo
     )
     get_test_session.add(history)
 
-    from sqlalchemy import select
     statement = select(HistoryModel)
-    results = await get_test_session.execute(statement=statement)
-    results.scalars().all()
+    await get_test_session.execute(statement=statement)
 
     yield history
-
-
-@pytest_asyncio.fixture()
-def new_test_url():
-    return {'url': f'www.google.com/{str(uuid.uuid4())}'}
 
 
 @pytest_asyncio.fixture()
