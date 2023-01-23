@@ -1,25 +1,22 @@
 import asyncio
 import uuid
-from asyncio import AbstractEventLoop
 from dataclasses import dataclass
 from functools import cached_property
-from typing import AsyncGenerator, Generator
-from sqlalchemy import select
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from _pytest.monkeypatch import MonkeyPatch
-from sqlalchemy import text, event
+from sqlalchemy import select, text
 from sqlalchemy.engine import URL, make_url
-from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession,
-                                    AsyncTransaction, create_async_engine)
-from sqlalchemy.orm import DeclarativeMeta, Session
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    create_async_engine)
+from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
 from db.db import create_sessionmaker, get_session
 from main import app
-from schemes import urls_scheme
 from models import Base, HistoryModel, UrlModel
+from schemes import urls_scheme
 
 metadata = Base.metadata
 
@@ -136,7 +133,6 @@ async def get_test_session(engine) -> AsyncSession:
     async_session = create_sessionmaker(engine)
     async with async_session() as session:
         yield session
-
 
 
 @pytest_asyncio.fixture(scope='session')

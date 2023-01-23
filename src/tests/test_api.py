@@ -1,13 +1,10 @@
 import pytest
-from fastapi.testclient import TestClient
-from httpx import URL
 from fastapi import HTTPException
+from httpx import URL, AsyncClient
 
-from schemes import urls_scheme
 from services.history_service import history_crud
 from services.request_service import request_crud
 from services.url_service import url_crud
-from httpx import AsyncClient
 
 base_url = "http://localhost:8080"
 
