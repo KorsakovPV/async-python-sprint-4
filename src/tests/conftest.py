@@ -15,9 +15,25 @@ from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncEngine, AsyncSession,
 from sqlalchemy.orm import DeclarativeMeta
 
 from config.config import settings
-from db.db import create_sessionmaker
-from models import Base, HistoryModel, UrlModel
+from db.db import create_sessionmaker, get_session
+from main import app
 from schemes import urls_scheme
+from models import Base, HistoryModel, UrlModel
+
+metadata = Base.metadata
+
+
+@pytest.fixture(scope="session")
+async def test_app(_create_db):
+    app.dependency_overrides[get_session] = get_test_session_for_dependency_overrides
+    yield app
+
+
+@pytest.fixture(scope='session')
+def event_loop(request):
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 
 @dataclass
@@ -69,23 +85,6 @@ class DBUtils:
         return make_url(self.url)
 
 
-def create_engine_test() -> AsyncEngine:
-    db_utils = DBUtils(url=settings.TEST_DB_URL)
-
-    return db_utils.db_engine
-
-
-async_session_test = create_sessionmaker(create_engine_test())
-
-
-async def override_get_db_session():
-    try:
-        db = async_session_test()
-        yield db
-    finally:
-        db.close()
-
-
 async def create_db(url: str, base: DeclarativeMeta) -> None:
     db_utils = DBUtils(url=url)
 
@@ -107,88 +106,84 @@ async def drop_db(url: str, base: DeclarativeMeta) -> None:
     await db_utils.drop_database()
 
 
-@pytest.fixture(scope='session')
-def event_loop() -> Generator[AbstractEventLoop, None, None]:
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest_asyncio.fixture(scope='session', autouse=True)
 async def _create_db() -> None:
     yield await create_db(url=settings.TEST_DB_URL, base=Base)
     await drop_db(url=settings.TEST_DB_URL, base=Base)
 
 
-@pytest_asyncio.fixture()
-async def engine_test() -> AsyncGenerator[AsyncEngine, None]:
-    engine = create_engine_test()
-    try:
-        yield engine
-    finally:
-        await engine.dispose()
+@pytest.fixture(scope="session")
+def engine():
+    return get_test_engine()
 
 
-@pytest_asyncio.fixture()
-async def db_test_connection(engine_test: AsyncEngine) -> AsyncGenerator[AsyncConnection, None]:
-    async with engine_test.connect() as test_connection:
-        yield test_connection
+def get_test_engine() -> AsyncEngine:
+    db_utils = DBUtils(url=settings.TEST_DB_URL)
+
+    return db_utils.db_engine
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def db_transaction(
-        db_test_connection: AsyncConnection
-) -> AsyncGenerator[AsyncTransaction, None]:
-    """
-    Recipe for using transaction rollback in tests
-    https://docs.sqlalchemy.org/en/14/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites  # noqa
-    """
-    async with db_test_connection.begin() as transaction:
-        yield transaction
-        await transaction.rollback()
+async def get_test_session_for_dependency_overrides() -> AsyncSession:
+    db_utils = DBUtils(url=settings.TEST_DB_URL)
+
+    engine = db_utils.db_engine
+    async_session = create_sessionmaker(engine)
+    async with async_session() as session:
+        yield session
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def session(
-        db_test_connection: AsyncConnection, monkeypatch: MonkeyPatch
-) -> AsyncGenerator[AsyncSession, None]:
-    session_maker = create_sessionmaker(db_test_connection)
-    monkeypatch.setattr('db.db.async_session', session_maker)
-
-    async with session_maker() as session:
+@pytest_asyncio.fixture(scope="session")
+async def get_test_session(engine) -> AsyncSession:
+    async_session = create_sessionmaker(engine)
+    async with async_session() as session:
         yield session
 
 
 @pytest_asyncio.fixture(scope='session')
-async def url_items() -> AsyncGenerator[UrlModel, None]:
-    async with async_session_test() as session, session.begin():
-        url1 = UrlModel(
-            url='http://httpbin.org/uuid',
-            is_delete=False,
-        )
-        url2 = UrlModel(
-            url='https://www.google.ru/',
-            is_delete=True,
-        )
-        session.add_all([url1, url2])
+async def url_items(get_test_session) -> AsyncGenerator[UrlModel, None]:
+    url1 = UrlModel(
+        url='http://httpbin.org/uuid',
+        is_delete=False,
+    )
+    url2 = UrlModel(
+        url='https://www.google.ru/',
+        is_delete=True,
+    )
+    get_test_session.add_all([url1, url2])
+
+    from sqlalchemy import select
+    statement = select(UrlModel)
+    results = await get_test_session.execute(statement=statement)
+    items = results.scalars().all()
+
     yield [url1, url2]
 
 
 @pytest_asyncio.fixture(scope='session')
-async def history_items(url_items) -> AsyncGenerator[HistoryModel, None]:
-    url_obj, deleted_url_obj = url_items
-    async with async_session_test() as session, session.begin():
-        history = HistoryModel(
-            url_id=url_obj.id,
-            method='GET',
-            domen='',
-        )
-        session.add(history)
+async def history_items(url_items, get_test_session) -> AsyncGenerator[HistoryModel, None]:
+    url_obj, _ = url_items
+    history = HistoryModel(
+        url_id=url_obj.id,
+        method='GET',
+        domen='',
+    )
+    get_test_session.add(history)
+
+    from sqlalchemy import select
+    statement = select(HistoryModel)
+    results = await get_test_session.execute(statement=statement)
+    results.scalars().all()
+
     yield history
 
 
 @pytest_asyncio.fixture()
 def new_test_url():
-    return urls_scheme.UrlEditSchema(
+    return {'url': f'www.google.com/{str(uuid.uuid4())}'}
+
+
+@pytest_asyncio.fixture()
+def new_test_url_schema():
+    return urls_scheme.UrlCreateSchema(
         url=f'www.google.com/{str(uuid.uuid4())}'
     )

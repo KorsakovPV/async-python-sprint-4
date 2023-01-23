@@ -10,7 +10,7 @@ from services.history_service import history_crud
 router = APIRouter()
 
 
-@router.get('/history', response_model=None)
+@router.get('/', response_model=None)
 async def get_status(
         url_id: UUID | None = None,
         user_id: UUID | None = None,
