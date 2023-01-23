@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import (TIMESTAMP, VARCHAR, Boolean, Column, Enum, ForeignKey,
                         String, func, sql, text)
 from sqlalchemy.dialects.postgresql import UUID
@@ -12,7 +14,7 @@ class BaseModel(Base):  # type: ignore
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
-        server_default=text('uuid_generate_v4()'),
+        default=uuid.uuid4
     )
     created_at = Column(TIMESTAMP(timezone=True), server_default=sql.func.current_timestamp())
     created_by = Column(String(255), nullable=True)

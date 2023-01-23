@@ -52,8 +52,7 @@ async def create_url(
     Create new entity.
     """
     # create item by params
-    url = await url_crud.create(db=db, obj_in=url_in)
-    return url
+    return await url_crud.create(db=db, obj_in=url_in)
 
 
 @router.post(
